@@ -6,7 +6,7 @@ Search results and file contents are tagged with repository names so the assista
 
 ## Prerequisites
 
-- .NET 8 SDK
+- .NET 10 SDK
 
 ## Configuration
 
@@ -14,22 +14,14 @@ Edit `appsettings.json`:
 
 ```json
 {
-  "Urls": "http://localhost:5000",
   "Agent": {
     "AgentName": "RepoAgent",
     "FileExtensions": [".cs", ".csproj", ".json", ".xml", ".md"],
     "MaxFileSizeKb": 100,
     "Repositories": {
-      "backend": {
-        "Path": "C:\\projects\\backend-api"
-      },
-      "frontend": {
-        "Path": "C:\\projects\\frontend-app",
-        "FileExtensions": [".ts", ".tsx", ".json", ".css", ".html"]
-      },
-      "shared-lib": {
-        "Path": "C:\\projects\\shared-library"
-      }
+      "backend": "C:\\projects\\backend-api",
+      "frontend": "C:\\projects\\frontend-app",
+      "shared-lib": "C:\\projects\\shared-library"
     }
   }
 }
@@ -40,16 +32,16 @@ Edit `appsettings.json`:
 | `AgentName` | MCP server name shown to clients |
 | `FileExtensions` | Default file types (can be overridden per repo) |
 | `MaxFileSizeKb` | Skip files larger than this |
-| `Repositories` | Named repositories — key is the name, value has `Path` and optional `FileExtensions` |
+| `Repositories` | Named repositories — key is the display name, value is the path |
 
-## Run
+## Build
 
 ```bash
 cd RepoAgent
-dotnet run
+dotnet publish -c Release -o bin/publish
 ```
 
-Server starts at `http://localhost:5000`.
+This produces a standalone executable at `bin/publish/RepoAgent.exe`.
 
 ## MCP Tools
 
@@ -73,14 +65,7 @@ All cross-repo tools tag results with the repository name:
 
 ## Connect to Amazon Q Developer
 
-### 1. Start the server
-
-```bash
-cd RepoAgent
-dotnet run
-```
-
-### 2. Add MCP config
+### 1. Add MCP config
 
 Create or edit `~/.aws/amazonq/mcp.json`:
 
@@ -88,13 +73,16 @@ Create or edit `~/.aws/amazonq/mcp.json`:
 {
   "mcpServers": {
     "repo-agent": {
-      "url": "http://localhost:5000"
+      "command": "C:\\path\\to\\RepoAgent\\bin\\publish\\RepoAgent.exe",
+      "args": []
     }
   }
 }
 ```
 
-### 3. Use in Amazon Q chat
+> **Note:** Point directly at the published exe. Using `dotnet run` can cause MCP protocol errors because build/restore output pollutes stdout.
+
+### 2. Use in Amazon Q chat
 
 - "List all repositories"
 - "Search all repos for authentication logic"
